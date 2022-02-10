@@ -23,14 +23,21 @@ public class Cliente implements Serializable{
 	//Poniendo @Id y despues @GeneratedValue(strategy= GenerationType.IDENTITY)
 	//lo que hacemos es que el Id nos coja como un identificiador unico de la base de datos.
 	private long id; //es el identificador de la base de datos
+	@Column(nullable=false)//con esto conseguimos que los atributos no puedan ser nulos
 	private String nombre;
+	
+	@Column(nullable=false)
 	private String apellido;
+	
+	@Column(nullable=false,unique=true) //Con esto hacemos que el email sea unico
 	private String email;
 	private int telefono;
 	
 	@Column(name="create_at") //Con esto vamos a ser capaces de modificar la base de datos
 	@Temporal(TemporalType.DATE) //Esto nos reconoce el dato Date
 	private Date createdAt;
+	
+	private String imagen;
 	
 	@PrePersist //Esto es para que se ejecute este metodo (el insertar la fecha actual) cuando introducimos un dato pero por setters.
 	public void prePersist() {
@@ -94,6 +101,16 @@ public class Cliente implements Serializable{
 
 	public void setCreatedAt(Date createdAt) {
 		this.createdAt = createdAt;
+	}
+
+
+	public String getImagen() {
+		return imagen;
+	}
+
+
+	public void setImagen(String imagen) {
+		this.imagen = imagen;
 	}
 
 
