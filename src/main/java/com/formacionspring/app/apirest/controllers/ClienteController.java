@@ -154,90 +154,14 @@ public class ClienteController {
 //	} Hacemos lo mismo, creamos un metodo que implemente los posibles errores y los tenga en cuenta.
 	
 	
-	@DeleteMapping("/clientes/{id}")
+	@DeleteMapping("clientes/{id}")
 	public ResponseEntity<?> deleteCliente(@PathVariable Long id) {
+		Cliente clienteBorrado= servicio.findById(id);
+		Map<String,Object> response = new HashMap<>();
 		
-		Cliente clienteBorrado = servicio.findById(id);
 		
-		Map<String, Object> response= new HashMap<>();
-		
-		if(clienteBorrado==null) {
-			response.put("mensaje", "Error al eliminar el cliente ".concat(id.toString()).concat(", no existe en la base de datos"));
-			return new ResponseEntity<Map<String,Object>>(response,HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-		
-		else {
-			
 		try {
-			
-			
-			
-			String nombreFotoAnterior = clienteBorrado.getImagen();
-			
-			if(nombreFotoAnterior !=null && nombreFotoAnterior.length()>0 ) {
-				
-				Path rutaFotoAnterior= Paths.get("uploads").resolve(nombreFotoAnterior).toAbsolutePath();
-				File archivoFotoanterior = rutaFotoAnterior.toFile();
-				
-				if(archivoFotoanterior.exists() && archivoFotoanterior.canRead() ) {
-					
-					archivoFotoanterior.delete();
-				
-				}
-			}
-			servicio.delete(id);
-		}catch(DataAccessException e) {
-			response.put("mensaje","Error al eliminar el registro");
-			response.put("error", e.getMessage().concat("_ ").concat(e.getMostSpecificCause().getMessage()));
-			return new ResponseEntity<Map<String,Object>>(response,HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-		response.put("mensaje","El cliente ha sido borrado con éxito!");
-		response.put("cliente",clienteBorrado);
-		
-		return new ResponseEntity<Map<String,Object>>(response,HttpStatus.CREATED);
-		}
-	}
-	
-	
-	
-	
-	//Como vamos a enviar un archivo es un metodo de post. La idea del siguiente metodo es asignat
-	//una imagen a un cliente mediante el id.
-	@PostMapping("/clientes/upload")
-	public ResponseEntity<?> uploadImagen(@RequestParam("archivo") MultipartFile archivo,@RequestParam("id") Long id){
-		
-		Map<String, Object> response= new HashMap<>();
-		
-		Cliente cliente = servicio.findById(id);
-		
-		if(!archivo.isEmpty()) {
-			
-			//String nombreArchivo =archivo.getOriginalFilename();
-			String nombreArchivo=UUID.randomUUID().toString()+"_"+archivo.getOriginalFilename().replace(" ", "");//con esto nos genera de forma aleatoria el nombre de la imagen y si hay espacios los quita
-			Path rutaArchivo = Paths.get("uploads").resolve(nombreArchivo).toAbsolutePath();
-			
-			try {
-				Files.copy(archivo.getInputStream(), rutaArchivo); //con esto guardamos el archivo en rutaArchivo
-			}catch(IOException e) {
-			response.put("mensaje","Error al eliminar el registro");
-			response.put("error", e.getMessage().concat("_ ").concat(e.getCause().getMessage()));
-			
-			return new ResponseEntity<Map<String,Object>>(response,HttpStatus.INTERNAL_SERVER_ERROR);
-			}
-			
-			cliente.setImagen(nombreArchivo);
-			
-			servicio.save(cliente); //Así guardamos el modelo de cliente con el nuevo modelo de cliente
-			
-			response.put("cliente", cliente);
-			response.put("mensaje", "Subida correcta de imagen "+nombreArchivo);
-		}else {
-			response.put("Archivo", "archivo vacío");
-		
-		return new ResponseEntity<Map<String,Object>>(response,HttpStatus.CREATED);
-		}
-		
-		String nombreFotoAnterior = cliente.getImagen();
+		String nombreFotoAnterior= clienteBorrado.getImagen();
 		
 		if(nombreFotoAnterior !=null && nombreFotoAnterior.length()>0 ) {
 			
@@ -250,10 +174,69 @@ public class ClienteController {
 			
 			}
 		}
+		servicio.delete(id);
+		}
+		
+		catch(DataAccessException e) {
+			response.put("mensaje","Error al borrar el cliente de la base de datos.");
+			response.put("error", e.getMessage().concat("_ ").concat(e.getMostSpecificCause().getMessage()));
+			
+		return new ResponseEntity<Map<String,Object>>(response,HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+		response.put("mensaje", "El cliente ha sido borrado con Ã©xito!");
+		response.put("error", clienteBorrado);
+		return new ResponseEntity<Map<String,Object>>(response,HttpStatus.CREATED);
+		}
+	
+	
+	
+	//Como vamos a enviar un archivo es un metodo de post. La idea del siguiente metodo es asignat
+	//una imagen a un cliente mediante el id.
+	@PostMapping("clientes/upload")
+	public ResponseEntity<?> uploadImagen(@RequestParam("archivo") MultipartFile archivo,@RequestParam("id") Long id){
+		Cliente cliente= servicio.findById(id);
+		Map<String,Object> response = new HashMap<>();
+		
+		if(!archivo.isEmpty()) {
+			//String nombreArchivo= archivo.getOriginalFilename();
+			String nombreArchivo= UUID.randomUUID().toString()+"__"+archivo.getOriginalFilename().replace(" ","");
+			Path rutaArchivo= Paths.get("uploads").resolve(nombreArchivo).toAbsolutePath();
+			
+			try {
+				Files.copy(archivo.getInputStream(), rutaArchivo);
+			}
+			
+			catch(IOException e) {
+				response.put("mensaje","Error al borrar el cliente de la base de datos.");
+				response.put("error", e.getMessage().concat("_ ").concat(e.getCause().getMessage()));
+				
+				return new ResponseEntity<Map<String,Object>>(response,HttpStatus.INTERNAL_SERVER_ERROR);
+			}
+			
+			String nombreFotoAnterior= cliente.getImagen();
+			
+			if(nombreFotoAnterior !=null && nombreFotoAnterior.length()>0 ) {
+				
+				Path rutaFotoAnterior= Paths.get("uploads").resolve(nombreFotoAnterior).toAbsolutePath();
+				File archivoFotoanterior = rutaFotoAnterior.toFile();
+				
+				if(archivoFotoanterior.exists() && archivoFotoanterior.canRead() ) {
+					
+					archivoFotoanterior.delete();
+				
+				}
+			}
 
+			
+			cliente.setImagen(nombreArchivo);
+			servicio.save(cliente);
+			
+			response.put("mensaje", "Subida correcta de imagen "+ nombreArchivo);
+		}
+		else {
+		response.put("mensaje", "archivo vacio");}
+		return new ResponseEntity<Map<String,Object>>(response,HttpStatus.CREATED);	
 	}
-	
-	
-	
 
 }
